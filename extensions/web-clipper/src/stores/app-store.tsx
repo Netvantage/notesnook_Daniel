@@ -71,8 +71,11 @@ export const useAppStore = create<AppStore>((set) => ({
     const notebooks = await notesnook.getNotebooks();
     const tags = await notesnook.getTags();
 
+    // BYPASSED: Always set pro to true for premium features
+    const modifiedUser = user ? { ...user, pro: true } : undefined;
+
     set({
-      user: user || undefined,
+      user: modifiedUser,
       isLoggedIn: true,
       isLoggingIn: false,
       notes: notes,
