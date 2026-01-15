@@ -477,23 +477,23 @@ export async function isFeatureAvailable<TId extends FeatureId>(
   value?: number
 ): Promise<FeatureResult<TId>> {
   const feature = getFeature(id);
-  const limit = await getFeatureLimit(feature);
-  const isAllowed = await limit.isAllowed(value || (await feature.used?.()));
+  // BYPASSED: Always use believer (highest tier) limits - all features unlocked
+  const limit = feature.availability.believer as unknown as Limit<Caption<TId>>;
 
   return {
     id,
-    isAllowed,
-    availableOn: isAllowed ? undefined : await availableOn(id, value),
+    isAllowed: true, // BYPASSED: Always allow all features
+    availableOn: undefined,
     caption: limit.caption,
-    error: features[id].error(limit)
+    error: ""
   };
 }
 
 export async function getFeatureLimit<TId extends FeatureId>(
   feature: Feature<TId>
 ) {
-  const plan = await getUserPlan();
-  return getFeatureLimitFromPlan(feature, plan);
+  // BYPASSED: Always return believer tier limits
+  return feature.availability.believer as unknown as Limit<Caption<TId>>;
 }
 
 export async function areFeaturesAvailable<TIds extends FeatureId[]>(
@@ -502,24 +502,23 @@ export async function areFeaturesAvailable<TIds extends FeatureId[]>(
 ): Promise<{
   [K in TIds[number]]: FeatureResult<K>;
 }> {
-  const plan = await getUserPlan();
+  // BYPASSED: Always return all features as allowed
   const results = {} as {
     [K in TIds[number]]: FeatureResult<K>;
   };
   for (let i = 0; i < ids.length; ++i) {
-    const value = values.at(i);
     const id = ids[i];
 
     const feature = getFeature(id);
-    const limit = getFeatureLimitFromPlan(feature, plan);
-    const isAllowed = await limit.isAllowed(value || (await feature.used?.()));
+    // BYPASSED: Always use believer (highest tier) limits
+    const limit = feature.availability.believer;
 
     results[id as TIds[number]] = {
       id: id as TIds[number],
-      isAllowed,
-      availableOn: isAllowed ? undefined : await availableOn(id, value),
+      isAllowed: true, // BYPASSED: Always allow all features
+      availableOn: undefined,
       caption: limit.caption as Caption<TIds[number]>,
-      error: features[id].error(limit)
+      error: ""
     };
   }
 
@@ -527,9 +526,8 @@ export async function areFeaturesAvailable<TIds extends FeatureId[]>(
 }
 
 async function getUserPlan() {
-  const user = await db.user.getUser();
-  const plan = user?.subscription?.plan || SubscriptionPlan.FREE;
-  return plan;
+  // BYPASSED: Always return BELIEVER (highest tier) regardless of actual subscription
+  return SubscriptionPlan.BELIEVER;
 }
 
 async function availableOn(id: FeatureId, value?: number) {
